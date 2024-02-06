@@ -2,8 +2,9 @@
 ## Why?
 - Show off some cool scripts
   - youtube-dl
-  - random
-  - linux/shredr
+  - toggle-touchbar
+  - git-save
+  - git-tree
 
 ### Git
 - `git-save`
@@ -11,7 +12,7 @@
   $ git save "feat: i did something awesome trust me bro"
   ```
   ```sh
-  #!/bin/bash
+  #!/bin/zsh
 
   COMMIT_MSG=$1
 
@@ -60,7 +61,7 @@
 - `Shell` environment is for manipulating shell environment, aka operating system
   - CRUD file/directory
   - Running/Killing process
-- File descriptor
+- File descriptors
   - `/dev/stdin`, `/dev/stdout`, `/dev/stderr`
   - `/dev/null`
     ```console
@@ -85,13 +86,13 @@
 - less
 - grep
 
-## 101
-First, open [cheatsheet](https://devhints.io/bash)
+## Let's Try It Out
+First thing first, let's open [bash cheatsheet](https://devhints.io/bash)
 
 ### (Env) var
 - There're no types(kinda)
 
-```bash
+```zsh
 echo "Hello world!"
 echo $PWD
 echo $USER
@@ -113,31 +114,10 @@ echo $((${NAMES[2]} * 2))
 ```
 
 ### Functions/Conditional statements/Loops
-```bash
-#!/bin/sh
-
-print_for_a_while() {
-  IDX=0
-
-  while [[ $IDX -lt 10 ]]; do
-    echo "Running $IDX th loop"
-
-    if [[ $((IDX % 2)) -eq 0 && $IDX -gt 5 ]]; then
-      echo "Even!"
-    fi
-
-    echo
-
-    IDX=$((IDX+1))
-    sleep 1
-  done
-}
-
-print_for_a_while
-```
+See [this demo](./demo/print_for_a_while.sh)
 
 ### Substitution
-```bash
+```zsh
 echo "The quick brown fox jumps over the lazy dog" > qwer.txt
 cat qwer.txt
 
@@ -145,7 +125,7 @@ echo "Contents of qwer.txt:\n\n  $(cat qwer.txt)"
 ```
 
 ### Pipe
-```bash
+```zsh
 cat qwer.txt | head -c 7
 cat qwer.txt > asdf.txt
 cat qwer.txt >> asdf.txt
@@ -156,3 +136,6 @@ pwd | pbcopy
 git log | head
 find ./src | grep .ts
 ```
+
+## ...and Some Fun Stuff
+`./hi.sh /dev/pts/N ascii-arts/cat.txt`
