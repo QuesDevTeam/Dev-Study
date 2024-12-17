@@ -1,0 +1,349 @@
+diff --git a/src/nest/common/kakao-message-sender/kakao-message-sender.ts b/src/nest/common/kakao-message-sender/kakao-message-sender.ts
+index ec98f893..2fc26949 100644
+--- a/src/nest/common/kakao-message-sender/kakao-message-sender.ts
++++ b/src/nest/common/kakao-message-sender/kakao-message-sender.ts
+@@ -1,17 +1,35 @@
+-export type SubscriptionPaymentNotification = {
+-  email: string,
+-  spaceName: string,
+-  subscriptionType: string,
+-  additionalServices: string,
+-  subscriptionPrice: string,
+-  paidAmount: string,
+-  period: string,
+-  csUrl: string,
+-  csContact: string,
+-  url: string,
+-  // string 새 문구 추가를 대비한 임시 템플릿 변수
+-  title: string,
+-  slogan: string,
++export type NotificationMessageType = 'SubscriptionPayment';
++
++export abstract class NotificationMessage {
++  constructor(
++    public readonly templateId: string,
++    public readonly type: NotificationMessageType,
++  ) {}
++
++  build() {
++    return {};
++  }
++}
++
++export class SubscriptionPaymentNotification extends NotificationMessage {
++  constructor(
++    templateId: string,
++    public readonly email: string,
++    public readonly spaceName: string,
++    public readonly subscriptionType: string,
++    public readonly additionalServices: string,
++    public readonly subscriptionPrice: string,
++    public readonly paidAmount: string,
++    public readonly period: string,
++    public readonly csUrl: string,
++    public readonly csContact: string,
++    public readonly url: string,
++    // string 새 문구 추가를 대비한 임시 템플릿 변수
++    public readonly title: string,
++    public readonly slogan: string,
++  ) {
++    super(templateId, 'SubscriptionPayment');
++  }
+ };
+ 
+ export type PointPaymentNotification = {
+diff --git a/src/nest/common/kakao-message-sender/purplebook-kakao-message-sender.ts b/src/nest/common/kakao-message-sender/purplebook-kakao-message-sender.ts
+index f818718d..81147abc 100644
+--- a/src/nest/common/kakao-message-sender/purplebook-kakao-message-sender.ts
++++ b/src/nest/common/kakao-message-sender/purplebook-kakao-message-sender.ts
+@@ -1,17 +1,7 @@
+ import { SolapiMessageService } from 'solapi';
+-import { isInJestEnv, isInProductionEnv } from 'src/misc';
++import { isInJestEnv } from 'src/misc';
+ import KakaoMessageSender, {
+-  CancelPaymentNotification,
+-  EndTrialNotification,
+-  PointPaymentNotification,
+-  SignUpNotification,
+-  StartTrialNotification,
+-  SubAdminApprovalNotification,
+-  SubAdminRequestNotification,
+-  SubAdminSeatPaymentNotification,
+-  SubscriptionPaymentNotification,
+-  SubscriptionRenewalNotification,
+-  VoterBookPaymentNotification,
++  NotificationMessage,
+ } from 'src/nest/common/kakao-message-sender/kakao-message-sender';
+ import TypedQuesError, { ErrorCode } from 'src/nest/common/model/error.model';
+ import { exists } from 'src/utils/sanitize';
+@@ -44,218 +34,24 @@ export default class PurplebookKakaoMessageSender extends KakaoMessageSender {
+     );
+   }
+ 
+-  async sendSubscriptionPaymentNotification(to: string, variable: SubscriptionPaymentNotification) {
+-    const TEMPLATED_ID = isInProductionEnv() ? 'KA01TP241015034839163oy9w0b4Xjuh' : 'KA01TP241015034839163oy9w0b4Xjuh';
+-
+-    const variables = {
+-      '#{email}': variable.email,
+-      '#{spaceName}': variable.spaceName,
+-      '#{subscriptionType}': variable.subscriptionType,
+-      '#{additionalServices}': variable.additionalServices,
+-      '#{paidAmount}': variable.paidAmount,
+-      '#{csUrl}': variable.csUrl,
+-      '#{csContact}': variable.csContact,
+-      '#{url}': variable.url,
+-      '#{title}': variable.title,
+-      '#{slogan}': variable.slogan,
+-    };
+-
+-    await this.send(to, TEMPLATED_ID, variables);
+-  }
+-
+-  async sendPointPaymentNotification(to: string, variable: PointPaymentNotification) {
+-    const TEMPLATED_ID = isInProductionEnv() ? 'KA01TP241010053346616BTk5hxVWz7z' : 'KA01TP241010053346616BTk5hxVWz7z';
+-
+-    const variables = {
+-      '#{userName}': variable.userName,
+-      '#{email}': variable.email,
+-      '#{spaceName}': variable.spaceName,
+-      '#{chargedPoint}': variable.chargedPoint,
+-      '#{paidAmount}': variable.paidAmount,
+-      '#{csUrl}': variable.csUrl,
+-      '#{csContact}': variable.csContact,
+-      '#{url}': variable.url,
+-      '#{title}': variable.title,
+-      '#{slogan}': variable.slogan,
+-    };
+-
+-    await this.send(to, TEMPLATED_ID, variables);
+-  }
+-
+-  async sendSubscriptionRenewalNotification(
+-    to: string, variable: SubscriptionRenewalNotification,
+-  ): Promise<void> {
+-    const TEMPLATED_ID = isInProductionEnv() ? 'KA01TP2410151320431299soFENN9nLt' : 'KA01TP2410151320431299soFENN9nLt';
+-
+-    const variables = {
+-      '#{userName}': variable.userName,
+-      '#{email}': variable.email,
+-      '#{spaceName}': variable.spaceName,
+-      '#{paidDate}': variable.paidDate,
+-      '#{subscriptionType}': variable.subscriptionType,
+-      '#{additionalServices}': variable.additionalServices,
+-      '#{expectedAmount}': variable.expectedAmount,
+-      '#{expectedPeriod}': variable.expectedPeriod,
+-      '#{csUrl}': variable.csUrl,
+-      '#{csContact}': variable.csContact,
+-      '#{url}': variable.url,
+-      '#{title}': variable.title,
+-      '#{slogan}': variable.slogan,
+-    };
+-
+-    await this.send(to, TEMPLATED_ID, variables);
+-  }
+-
+-  async sendVoterBookPaymentNotification(to: string, variable: VoterBookPaymentNotification) {
+-    const TEMPLATED_ID = isInProductionEnv() ? 'KA01TP241010054433605ttVSTnHuzpZ' : 'KA01TP241010054433605ttVSTnHuzpZ';
+-
+-    const variables = {
+-      '#{email}': variable.email,
+-      '#{spaceName}': variable.spaceName,
+-      '#{productType}': variable.productType,
+-      '#{number}': variable.number,
+-      '#{amount}': variable.amount,
+-      '#{csUrl}': variable.csUrl,
+-      '#{csContact}': variable.csContact,
+-      '#{title}': variable.title,
+-      '#{slogan}': variable.slogan,
+-    };
+-
+-    await this.send(to, TEMPLATED_ID, variables);
+-  }
+-
+-  async sendSubAdminSeatPaymentNotification(to: string, variable: SubAdminSeatPaymentNotification) {
+-    const TEMPLATED_ID = isInProductionEnv() ? 'KA01TP241010055151364RKWWlmSDwan' : 'KA01TP241010055151364RKWWlmSDwan';
+-
+-    const variables = {
+-      '#{spaceName}': variable.spaceName,
+-      '#{email}': variable.email,
+-      '#{productType}': variable.productType,
+-      '#{number}': variable.number,
+-      '#{amount}': variable.amount,
+-      '#{csUrl}': variable.csUrl,
+-      '#{csContact}': variable.csContact,
+-      '#{title}': variable.title,
+-      '#{slogan}': variable.slogan,
+-    };
+-
+-    await this.send(to, TEMPLATED_ID, variables);
+-  }
+-
+-  async sendStartTrialNotification(to: string, variable: StartTrialNotification) {
+-    const TEMPLATED_ID = isInProductionEnv() ? 'KA01TP241011082135438s9Q0sUozBnc' : 'KA01TP241011082135438s9Q0sUozBnc';
+-
+-    const variables = {
+-      '#{email}': variable.email,
+-      '#{userName}': variable.userName,
+-      '#{spaceName}': variable.spaceName,
+-      '#{trialPeriod}': variable.trialPeriod,
+-      '#{csUrl}': variable.csUrl,
+-      '#{csContact}': variable.csContact,
+-      '#{title}': variable.title,
+-      '#{slogan}': variable.slogan,
+-    };
+-
+-    await this.send(to, TEMPLATED_ID, variables);
+-  }
+-
+-  // TODO: 스케줄러에서 부르기
+-  async sendEndTrialNotification(to: string, variable: EndTrialNotification) {
+-    const TEMPLATED_ID = isInProductionEnv() ? 'KA01TP241011083423466NTJhdOgPpWB' : 'KA01TP241011083423466NTJhdOgPpWB';
+-
+-    const variables = {
+-      '#{email}': variable.email,
+-      '#{userName}': variable.userName,
+-      '#{spaceName}': variable.spaceName,
+-      '#{trialEndDate}': variable.trialEndDate,
+-      '#{csUrl}': variable.csUrl,
+-      '#{csContact}': variable.csContact,
+-      '#{url}': variable.url,
+-      '#{title}': variable.title,
+-      '#{slogan}': variable.slogan,
+-    };
+-
+-    await this.send(to, TEMPLATED_ID, variables);
+-  }
+-
+-  async sendCancelPaymentNotification(to: string, variable: CancelPaymentNotification) {
+-    const TEMPLATED_ID = isInProductionEnv() ? 'KA01TP2410100551020068yWCQBcHM19' : 'KA01TP2410100551020068yWCQBcHM19';
+-    const variables = {
+-      '#{email}': variable.email,
+-      '#{spaceName}': variable.spaceName,
+-      '#{canceledAmount}': variable.canceledAmount,
+-      '#{canceledAt}': variable.canceledAt,
+-      '#{csUrl}': variable.csUrl,
+-      '#{csContact}': variable.csContact,
+-      '#{title}': variable.title,
+-      '#{slogan}': variable.slogan,
+-
+-    };
+-
+-    await this.send(to, TEMPLATED_ID, variables);
+-  }
+-
+-  async sendSignUpNotification(to: string, variable: SignUpNotification) {
+-    const TEMPLATED_ID = isInProductionEnv() ? 'KA01TP241011085342223fSoBAc4BcPO' : 'KA01TP241011085342223fSoBAc4BcPO';
+-    const variables = {
+-      '#{userName}': variable.userName,
+-      '#{email}': variable.email,
+-      '#{userCreatedAt}': variable.userCreatedAt,
+-      '#{url}': variable.url,
+-      '#{title}': variable.title,
+-      '#{slogan}': variable.slogan,
+-    };
+-
+-    await this.send(to, TEMPLATED_ID, variables);
+-  }
+-
+-  async sendSubAdminRequestNotification(to: string, variable: SubAdminRequestNotification) {
+-    const TEMPLATED_ID = isInProductionEnv() ? 'KA01TP241002075457644dbyxE6nu0iR' : 'KA01TP241002075457644dbyxE6nu0iR';
+-    const variables = {
+-      '#{spaceName}': variable.spaceName,
+-      '#{userName}': variable.userName,
+-      '#{adminName}': variable.adminName,
+-      '#{url}': variable.url,
+-      '#{title}': variable.title,
+-      '#{slogan}': variable.slogan,
+-    };
+-
+-    await this.send(to, TEMPLATED_ID, variables);
+-  }
+-
+-  async sendSubAdminApprovalNotification(to: string, variable: SubAdminApprovalNotification) {
+-    const TEMPLATED_ID = isInProductionEnv() ? 'KA01TP2410070803376861hPlutMmK6e' : 'KA01TP2410070803376861hPlutMmK6e';
+-    const variables = {
+-      '#{spaceName}': variable.spaceName,
+-      '#{userName}': variable.userName,
+-      '#{email}': variable.email,
+-      '#{adminRole}': variable.adminRole,
+-      '#{approvedAt}': variable.approvedAt,
+-      '#{url}': variable.url,
+-      '#{title}': variable.title,
+-      '#{slogan}': variable.slogan,
+-    };
+-
+-    await this.send(to, TEMPLATED_ID, variables);
+-  }
+-
+   // TODO: 10000건 이상 요청시 잘라서 보내기 groupId 체크. 반환타입 변경
+-  private async send(
++  async send(
+     to: string,
+-    templateId: string,
+-    variables: { [key: string]: string },
++    notification: NotificationMessage,
+     pfId?: string,
+   ): Promise<void> {
+     if (isInJestEnv()) {
+       return;
+     }
+ 
++    const variables = notification.buildKakaoMessageVariables()
++
+     await this.purplebookMessageService.send({
+       to,
+       from: this.SENDER_NUMBER,
+       kakaoOptions: {
+         pfId: exists(pfId) ? pfId : this.DEFAULT_PLUS_FRIEND_ID,
+-        templateId,
++        templateId: notification.templateId,
+         variables,
+         disableSms: false,
+       },
+diff --git a/src/nest/order/service/notification/order-notification.service.ts b/src/nest/order/service/notification/order-notification.service.ts
+index 453bd3f9..a8b2ae5e 100644
+--- a/src/nest/order/service/notification/order-notification.service.ts
++++ b/src/nest/order/service/notification/order-notification.service.ts
+@@ -27,6 +27,7 @@ import Admin from 'src/nest/admin/model/admin.model';
+ import Organization from 'src/nest/organization/model/organization.model';
+ import moment from 'moment';
+ import Payment from 'src/nest/payment/model/payment.model';
++import { isInProductionEnv } from 'src/misc';
+ 
+ export const CS_CONTACT = '1533-1912';
+ export const CS_URL = 'https://o3kv9.channel.io/home';
+@@ -219,20 +220,21 @@ export default class OrderNotificationService {
+       additionalServices = `\n▪︎ 부가서비스: 매니저(에디터) / ${product.subAdminSeats}인 / ${formatNumberWithComma(subAdminSeatPrice)}원`;
+     }
+ 
+-    return {
+-      email: user.getRootEmail(),
+-      spaceName: organization.name,
+-      subscriptionType: product.getSubscriptionTypeName(),
+-      subscriptionPrice: `${formatNumberWithComma(SubscriptionProduct.PlanPrice)}원`,
+-      paidAmount: `${formatNumberWithComma(product.price)}원`,
++    return new SubscriptionPaymentNotification(
++      isInProductionEnv() ? 'KA01TP241015034839163oy9w0b4Xjuh' : 'KA01TP241015034839163oy9w0b4Xjuh',
++      user.getRootEmail(),
++      organization.name,
++      product.getSubscriptionTypeName(),
++      `${formatNumberWithComma(SubscriptionProduct.PlanPrice)}원`,
++      `${formatNumberWithComma(product.price)}원`,
+       additionalServices,
+-      period: `${startDate} ~ ${endDate}`,
+-      csUrl: CS_URL,
+-      csContact: CS_CONTACT,
++      `${startDate} ~ ${endDate}`,
++      CS_URL,
++      CS_CONTACT,
+       url,
+-      title: '',
+-      slogan: '',
+-    };
++      '',
++      '',
++    );
+   }
+ 
+   private buildPointPaymentMessage(
+
