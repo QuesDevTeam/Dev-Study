@@ -1,5 +1,8 @@
 #!/bin/sh
 
+DECOR_UNUSED='X'
+DECOR_USED='O'
+
 starts_with() {
   LHS="$1"
   RHS="$2"
@@ -51,7 +54,7 @@ print_usages() {
       continue
     fi
 
-    printf "O: $CALLER_FILE_NAME -> $LEGACY_CANDIDATE_FILE_PATH\n"
+    printf "$DECOR_USED: $CALLER_FILE_NAME -> $LEGACY_CANDIDATE_FILE_PATH\n"
 
     CALLER_LINE="${FOUND_LINE#*:}"
 
@@ -65,13 +68,21 @@ while [ $# -gt 0 ] && [ ${1:0:1} = '-' ]; do
     --print-usage)
       PRINT_USAGE=1
       ;;
+    --unused-decorator)
+      DECOR_UNUSED=$2
+      shift
+      ;;
+    --used-decorator)
+      DECOR_USED=$2
+      shift
+      ;;
   esac
 
   shift
 done
 
 if [ $# -lt 2 ]; then
-  printf "Usage: $(basename $0) [--print-usage] CALLEES_FILE_NAME CALLERS_FILE_NAME\n" > /dev/stderr
+  printf "Usage: $(basename $0) [--print-usage] [--unused-decorator 👻] [--unused-decorator 🫀] CALLEES_FILE_NAME CALLERS_FILE_NAME\n" > /dev/stderr
   exit 1
 fi
 
@@ -90,7 +101,7 @@ for LEGACY_CANDIDATE in ${LEGACY_CANDIDATES[@]}; do
   LEGACY_CANDIDATE_FILE_PATH=${LEGACY_CANDIDATE%:*}
 
   if ! FOUND=$(cat "$CALLERS_FILE_NAME" | xargs grep -H -n "\.$LEGACY_CANDIDATE_FUNCTION_NAME("); then
-    printf "X: $LEGACY_CANDIDATE_FILE_PATH.$LEGACY_CANDIDATE_FUNCTION_NAME\n"
+    printf "$DECOR_UNUSED: $LEGACY_CANDIDATE_FILE_PATH.$LEGACY_CANDIDATE_FUNCTION_NAME\n"
     continue
   fi
 
