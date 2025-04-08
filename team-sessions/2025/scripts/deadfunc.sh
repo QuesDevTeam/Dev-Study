@@ -50,16 +50,36 @@ print_usages() {
     CANONICAL_LEGACY_FILE_PATH=${LEGACY_CANDIDATE_FILE_PATH%%\.js}
     CANONICAL_LEGACY_FILE_PATH=${CANONICAL_LEGACY_FILE_PATH%/index}
 
-    if ! get_expanded_imports "$CALLER_FILE_NAME" | grep -n "$CANONICAL_LEGACY_FILE_PATH" > /dev/null 2>&1; then
-      continue
-    fi
+    if [ "$CALLER_FILE_NAME" = "$LEGACY_CANDIDATE_FILE_PATH" ]; then
+      printf "$DECOR_USED: $CALLER_FILE_NAME(self)\n"
+    else
+      if ! get_expanded_imports "$CALLER_FILE_NAME" | grep -n "$CANONICAL_LEGACY_FILE_PATH" > /dev/null 2>&1; then
+        continue
+      fi
 
-    printf "$DECOR_USED: $CALLER_FILE_NAME -> $LEGACY_CANDIDATE_FILE_PATH\n"
+      printf "$DECOR_USED: $CALLER_FILE_NAME -> $LEGACY_CANDIDATE_FILE_PATH\n"
+    fi
 
     CALLER_LINE="${FOUND_LINE#*:}"
 
     printf "\t$CALLER_LINE\n"
   done
+}
+
+find_usage() {
+  LEGACY_CANDIDATE_FUNCTION_NAME="$1"
+  CALLERS_FILE_NAME="$2"
+  LEGACY_CANDIDATE_FILE_PATH="$3"
+
+  FOUND_FROM_CALLERS=$(cat "$CALLERS_FILE_NAME" | xargs grep -H -n "$LEGACY_CANDIDATE_FUNCTION_NAME(" | grep -v 'function ')
+  FOUND_FROM_SELF=$(grep -H -n -E "$LEGACY_CANDIDATE_FUNCTION_NAME\(" "$LEGACY_CANDIDATE_FILE_PATH" | grep -v 'function ')
+
+  if [ -n "$FOUND_FROM_CALLERS" ] || [ -n "$FOUND_FROM_SELF" ]; then
+    printf "$FOUND_FROM_CALLERS\n$FOUND_FROM_SELF\n"
+    return 0
+  else
+    return 1
+  fi
 }
 
 PRINT_USAGE=0
@@ -100,9 +120,9 @@ for LEGACY_CANDIDATE in ${LEGACY_CANDIDATES[@]}; do
   LEGACY_CANDIDATE_FUNCTION_NAME=${LEGACY_CANDIDATE##*:}
   LEGACY_CANDIDATE_FILE_PATH=${LEGACY_CANDIDATE%:*}
 
-  if ! FOUND=$(cat "$CALLERS_FILE_NAME" | xargs grep -H -n "\.$LEGACY_CANDIDATE_FUNCTION_NAME("); then
-    printf "$DECOR_UNUSED: $LEGACY_CANDIDATE_FILE_PATH.$LEGACY_CANDIDATE_FUNCTION_NAME\n"
-    continue
+  if ! FOUND=$(find_usage "$LEGACY_CANDIDATE_FUNCTION_NAME" "$CALLERS_FILE_NAME" "$LEGACY_CANDIDATE_FILE_PATH"); then
+      printf "$DECOR_UNUSED: $LEGACY_CANDIDATE_FILE_PATH.$LEGACY_CANDIDATE_FUNCTION_NAME\n"
+      continue
   fi
 
   if [ $PRINT_USAGE -ne 1 ]; then
